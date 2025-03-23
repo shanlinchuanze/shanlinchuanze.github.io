@@ -1,0 +1,509 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>堆入门 | 山林川泽的博客</title><meta name="keywords" content="pwn,堆"><meta name="author" content="山林川泽"><meta name="copyright" content="山林川泽"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="堆入门"><meta name="application-name" content="堆入门"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="堆入门"><meta property="og:url" content="http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/index.html"><meta property="og:site_name" content="山林川泽的博客"><meta property="og:description" content="堆1.堆是由操作系统内核或者堆管理器动态分配的 2.只有在程序中需要时才会分配 3.在CTF的pwn程序中，栈是程序加载进内存后就会出现，而堆需要malloc,alloc,realoc函数分配内存后才会出现。 Windows和Linux下的堆分配，管理方式都不同， 堆在虚拟内存中的位置 128M 1"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta property="article:author" content="山林川泽"><meta property="article:tag" content="生活,养猫,C/C++，pwn,web"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg"><meta name="description" content="堆1.堆是由操作系统内核或者堆管理器动态分配的 2.只有在程序中需要时才会分配 3.在CTF的pwn程序中，栈是程序加载进内存后就会出现，而堆需要malloc,alloc,realoc函数分配内存后才会出现。 Windows和Linux下的堆分配，管理方式都不同， 堆在虚拟内存中的位置 128M 1"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: {"enable":true,"img":"https://upload-bbs.miyoushe.com/upload/2023/09/03/125766904/ee23df8517f3c3e3efc4145658269c06_5714860933110284659.png"},
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: {"enable":true,"default":"晚上好👋","list":[{"greeting":"晚安😴","startTime":0,"endTime":5},{"greeting":"早上好鸭👋, 祝你一天好心情！","startTime":6,"endTime":9},{"greeting":"上午好👋, 状态很好，鼓励一下～","startTime":10,"endTime":10},{"greeting":"11点多啦, 在坚持一下就吃饭啦～","startTime":11,"endTime":11},{"greeting":"午安👋, 宝贝","startTime":12,"endTime":14},{"greeting":"🌈充实的一天辛苦啦！","startTime":14,"endTime":18},{"greeting":"19点喽, 奖励一顿丰盛的大餐吧🍔。","startTime":19,"endTime":19},{"greeting":"晚上好👋, 在属于自己的时间好好放松😌~","startTime":20,"endTime":24}]},
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: {"skills":null},
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: 山林川泽","link":"链接: ","source":"来源: 山林川泽的博客","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"top-center"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.1.2/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '山林川泽的博客',
+  title: '堆入门',
+  postAI: '',
+  pageFillDescription: '堆, 生长方向不同的原因, 堆的基本结构, 堆的结构, malloc_chunk的结构, 1.pre size 字段, 2.size字段, 3.user  data, 结构图, 使用中（分配后）, 空闲中（使用后）, 堆块大小, 空间复用, IDA中常见的指针表示形式, 链表, 申请堆块的本质, 查看已分配的堆内存分布, main_arena与 top chunk, main_arena, top chunk, free函数和bins, free函数, bin堆堆是由操作系统内核或者堆管理器动态分配的只有在程序中需要时才会分配在的程序中栈是程序加载进内存后就会出现而堆需要函数分配内存后才会出现和下的堆分配管理方式都不同堆在虚拟内存中的位置用户空间独立预留代码段数据段默认为数据段堆共享库栈命令行参数环境变量内核空间共享堆的生长方向是从低地址向高地址生长的而栈是从高地址向低地址生长的生长方向不同的原因内存利用效率堆和栈的生长方向不同可以让空闲的内存最大程度地被使用如果栈的生长方向也是向上增长那么栈空间的起始位置就需要事先固定下来这样在不同程序中栈和堆的使用情况不同可能会导致内存利用不均衡例如一个程序可能因为栈溢出而崩溃但同时堆中还有大量未使用的空间内存管理方式栈是由编译器自动管理的而堆则需要程序员手动管理栈的空间大小在编译时就已确定通常不会超过编译器为其分配的空间而堆则是在运行时动态分配的可以根据需要申请更多的内存空间堆的基本结构和头统称为头每次申请得到的内存指针其实指向的起始处堆的大致图解如下函数返回的指针指向这里堆的结构的结构每个程序分配的内存在内部被一个叫做堆块的所替代一个堆块是由元数据和程序返回的内存组成的实际上内存是返回值所有的这些堆块都是保存在堆上这块内存区域在申请新的内存时会不断的扩大同样当一定数量的内存释放时堆可以收缩在源码中定义的堆块如下一般来说在位中是位无符号整数位中是位无符号整数假设内存中没有堆块释放新分配的内存区域紧随之前申请的堆块后因此如果一个程序依次以及内存布局如下堆的生长方向是从低地址向高地址生长的在堆块之间的是虚拟的边界实际当中他们是彼此相邻的布局中包含一个顶块元数据顶级块表示堆中可利用的内存而且是唯一的可以大小可以生长的堆块当申请新的内存时顶块分为两个部分第一个部分变成所申请的堆块第二个部分变为新的顶块因此顶块大小可以收缩如果顶块不能够满足申请的内存区域大小程序就会要求操作系统扩大顶块让堆继续生长被释放的被记录在链表中可能是循环双向链表也可能是单向链表具体结构如下一般情况下物理相邻的两个空间会被合并成一个堆管理器会通过字段合并两个物理相邻的空闲块字段全程为如果该的物理相邻的前一地址两个指针的地址差值为前一大小是空闲的话那该字段记录的是前一个的大小包括头否则该字段可以用来储存物理相邻的前一个的数据这里的前一指的是较低地址的前面一个堆块在使用时并且为储存前面的数据时他的值始终为堆是由低地址向高地址生长字段这个是用来指示当前堆块的大小的头部加上的大小大小必须是的整数倍如果申请的内存大小不是乘的整数倍会被转换为满足大小的最小的乘的倍数位系统中是位系统中是该字段的低三个比特位对的大小没有影响字段的最后三位相当于三个这三个的作用分别是为表示该属于主分配区主线程为表示该属于非主分配区非主线程表示当前是从哪个内存区域获得的虚拟内存为表示该是从映射区域分配的否则是从区域分配的记录前一个块是否被分配一般来说堆中第一个被分配的内存块的字段的位都会设置为以便于防止访问前面的非法内存当一个的的位为时我们能通过字段来获取上一个的大小以及地址这也方便进行空闲之间的合并用于存放用户数据使用函数分配到的内存的返回值指针是指向用户数据区例如在位系统中申请到的堆块总大小为第一个字节是系统分配的最小内存也就是说如果想要申请的内存小于系统最小分配的内存的话就会按照最小的内存分配在位系统中这个值是个字节在位系统中是八个字节例如如果代码中是的话堆管理器也会分配最小内存空间给你第二个字节是字段的大小位的为字节第三个字节为字段的大小位的字节最后一个字节是的值只有或两个值整理一下堆的基本结构包括字段包括头部加上的大小出最小大小为系统最小分配内存字段结构图使用中分配后空闲中使用后空闲中的不存在状态只有状态头部被分配出两个成员和处于分配状态时从字段开始是用户的数据空闲时会被添加到对应的空闲管理链表中其字段的含义如下指向前一个非物理相邻空闲的起始地址位占字节位占八字节指向后一个非物理相邻空闲的起始地址位字节位字节通过和可以将空闲的块加入到空闲的块链表进行统一管理注意事实上释放后的中还存在另外两个成员和上图并未画出其简介如下是只有空闲的时候才使用不过其用于较大的指向前一个与当前大小不同的第一个空闲块不包含的头指针指向后一个与当前大小不同的第一个空闲块不包含的头指针注意一般空闲的按照由大到小的顺序排列在的遍历时可以避免在寻找合适时对所有进行遍历堆块大小位操作系统用户分配到的最小堆块大小为若用户申请到的大小超过最小堆块大小会与进行对齐空间复用当一个处于使用状态时它的下一个的无效所以下一个的也可以被当前使用这就是的空间复用中常见的指针表示形式在的伪代码中的指针形式如下表示取到这个地址加偏移的那个地址储存的值汇编代码等同于简单转化一下就是链表在的题目中经常会有一些笔记管理系统的题目代码提供了最基本的增删查改的功能这个笔记的数据结构通常就是使用链表连接起来的记录当前的大小属性内容等等例如就代表从这个地址处再往后偏移个字节取到这个地址存储的值接着吧赋值给这个地方也就是把存入这个地址同样的就代表偏移个字节处的值为依次类推就可以在不连续的内存空间中把整个的数据结构存储下来了申请堆块的本质堆管理器主要是通过函数来分配和释放内存块的作用通俗的讲就是相当于一个中间商在程序想要向系统申请堆空间时这里的就会申请一块很大的空间并根据算法从这些内存中把空间真正的分配给程序例如操作系统内核运行库堆管理器程序申请一块较大的空间根据分配算法来分配空间例在处进行调试在处下断点在这里使用命令查看内存分布可以看到此时并没有发现堆段单步命令再次查看内存发现出现了堆段但是这里我们明明只是申请了字节的大小但是为什么这里给了那么大的堆段呢计算一下刚好是一个地址可以容纳的内容这的堆空间叫做此时因为是主线程分配的所以这个区域叫做也就是说这是厂家内核批发给中间商的货物以便下次程序在向系统申请小内存的时候直接去中间商去取就行了他就会在这就继续去找厂家系统内核去取货查看已分配的堆内存分布在上面我们动态调试的时候执行了函数申请到的堆指针是保存在中的申请到的堆指针是保存在中的我们这里使用下面这个命令来查看内存堆块情况位的程序使用比较直观一点这里减去表示从堆块的头部开始观察包含和字段与这个其实就是堆管理器通过与操作系统内核进行交互申请到的也就是上面所说的批发到的一堆货物因为是主线程分配的所以叫通过增加的方法来增加的大小顾名思义是堆中第一个堆块相当于带头大哥程序以后分配到的内存要放到他的后面在系统当前的所以无论那种都无法满足用户请求的内存的大小的时候将此当作一个应急消防员分配给用户使用简单来说也就是在程序在向堆管理器申请内存时没有合适的内存空间可以分配给他此时就会从上剪切一部分作为分配给他函数和函数函数的使用是和的分配息息相关的例内存拷贝函数程序将字符串复制到申请的堆内存空间中调试执行到函数后单步运行这里可以看到我们的继续运行执行可以看到原本堆块中的内容已经被清空原本堆空间中的内容已经被清空执行所以调用函数之后做了两件事清空此堆块的将此堆块的指针存储到中了或是这个概念是与内存回收相关的也就是堆管理器会根据用户已经申请到的内存空间大小进行释放来决定放入哪类直接翻译过来就是垃圾桶的意思所以系统在决定使用哪个时可以看作垃圾的分类暂未完成后面的还没完全理解贯彻',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2025-03-19 22:35:04',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
+        
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://npm.elemecdn.com/anzhiyu-blog-static@1.0.4/img/avatar.jpg"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">山林川泽的博客</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/C-%E7%BB%93%E6%9E%84%E4%BD%93/" style="font-size: 1.05rem;">C,结构体<sup>1</sup></a><a href="/tags/C%E8%AF%AD%E8%A8%80%EF%BC%8C%E6%8C%87%E9%92%88%EF%BC%8C%E6%A0%88%E7%A9%BA%E9%97%B4%EF%BC%8C%E5%9C%B0%E5%9D%80/" style="font-size: 1.05rem;">C语言，指针，栈空间，地址<sup>1</sup></a><a href="/tags/PWN-NSSCTF-ret2text-ret2libc/" style="font-size: 1.05rem;">PWN,NSSCTF,ret2text,ret2libc<sup>1</sup></a><a href="/tags/Python/" style="font-size: 1.05rem;">Python<sup>1</sup></a><a href="/tags/ROP-CTF-Ret2text-Ret2shellcode-%E6%A0%88%E6%BA%A2%E5%87%BA%EF%BC%8C%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%EF%BC%8C%E6%95%B4%E6%95%B0%E6%BA%A2%E5%87%BA/" style="font-size: 1.05rem;">ROP,CTF,Ret2text,Ret2shellcode,栈溢出，缓冲区溢出，整数溢出<sup>1</sup></a><a href="/tags/ROP-Ret2text-Ret2shellcode-CTF/" style="font-size: 1.05rem;">ROP,Ret2text,Ret2shellcode,CTF<sup>1</sup></a><a href="/tags/ROP-ret2text-ret2shellcode-%E6%A0%88%E6%BA%A2%E5%87%BA%EF%BC%8C%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA/" style="font-size: 1.05rem;">ROP,ret2text,ret2shellcode,栈溢出，缓冲区溢出<sup>1</sup></a><a href="/tags/chunk/" style="font-size: 1.05rem;">chunk<sup>1</sup></a><a href="/tags/c%E8%AF%AD%E8%A8%80%EF%BC%8C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%8C%E9%80%89%E6%8B%A9%E7%BB%93%E6%9E%84%EF%BC%8C%E5%BE%AA%E7%8E%AF%E7%BB%93%E6%9E%84%EF%BC%8Cc%E8%AF%AD%E8%A8%80%E8%B0%83%E7%94%A8%E5%87%BD%E6%95%B0%EF%BC%8Cc%E8%AF%AD%E8%A8%80%E4%B8%8E%E6%8C%87%E9%92%88%EF%BC%8C%E6%95%B0%E7%BB%84/" style="font-size: 1.05rem;">c语言，学习笔记，选择结构，循环结构，c语言调用函数，c语言与指针，数组<sup>1</sup></a><a href="/tags/pwn/" style="font-size: 1.05rem;">pwn<sup>1</sup></a><a href="/tags/pwn-%E5%A0%86/" style="font-size: 1.05rem;">pwn,堆<sup>1</sup></a><a href="/tags/ret2libc-ret2syscall/" style="font-size: 1.05rem;">ret2libc,ret2syscall<sup>1</sup></a><a href="/tags/%E2%80%9C%E6%A0%88%EF%BC%8C%E6%A0%88%E7%A9%BA%E9%97%B4%EF%BC%8C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%9D/" style="font-size: 1.05rem;">“栈，栈空间，学习笔记”<sup>1</sup></a><a href="/tags/%E5%88%B7%E9%A2%98/" style="font-size: 1.05rem;">刷题<sup>1</sup></a><a href="/tags/%E5%AD%97%E5%85%B8/" style="font-size: 1.05rem;">字典<sup>1</sup></a><a href="/tags/%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/" style="font-size: 1.05rem;">文件操作<sup>1</sup></a><a href="/tags/%E6%96%B0%E7%94%9F%E8%B5%9B%EF%BC%8C%E6%AF%94%E8%B5%9B/" style="font-size: 1.05rem;">新生赛，比赛<sup>1</sup></a><a href="/tags/%E6%A0%88%E8%BF%81%E7%A7%BB/" style="font-size: 1.05rem;">栈迁移<sup>1</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/03/"><span class="card-archive-list-date">三月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">3</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/02/"><span class="card-archive-list-date">二月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2025/01/"><span class="card-archive-list-date">一月 2025</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/12/"><span class="card-archive-list-date">十二月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/11/"><span class="card-archive-list-date">十一月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/10/"><span class="card-archive-list-date">十月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">7</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2024/09/"><span class="card-archive-list-date">九月 2024</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="article-meta tags"><a class="article-meta__tags" href="/tags/pwn-%E5%A0%86/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>pwn,堆</span></a></span></div></div><h1 class="post-title" itemprop="name headline">堆入门</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2025-01-20T05:16:37.000Z" title="发表于 2025-01-20 13:16:37">2025-01-20</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2025-03-19T14:35:04.685Z" title="更新于 2025-03-19 22:35:04">2025-03-19</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为福州"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>福州</span></div></div></div><section class="main-hero-waves-area waves-area"><svg class="waves-svg" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" viewBox="0 24 150 28" preserveAspectRatio="none" shape-rendering="auto"><defs><path id="gentle-wave" d="M -160 44 c 30 0 58 -18 88 -18 s 58 18 88 18 s 58 -18 88 -18 s 58 18 88 18 v 44 h -352 Z"></path></defs><g class="parallax"><use href="#gentle-wave" x="48" y="0"></use><use href="#gentle-wave" x="48" y="3"></use><use href="#gentle-wave" x="48" y="5"></use><use href="#gentle-wave" x="48" y="7"></use></g></svg></section><div id="post-top-cover"><img class="nolazyload" id="post-top-bg" src=""></div></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container" itemscope itemtype="http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/"><header><a href="/tags/pwn-%E5%A0%86/" tabindex="-1" itemprop="url">pwn,堆</a><h1 id="CrawlerTitle" itemprop="name headline">堆入门</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">山林川泽</span><time itemprop="dateCreated datePublished" datetime="2025-01-20T05:16:37.000Z" title="发表于 2025-01-20 13:16:37">2025-01-20</time><time itemprop="dateCreated datePublished" datetime="2025-03-19T14:35:04.685Z" title="更新于 2025-03-19 22:35:04">2025-03-19</time></header><h1 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h1><p>1.堆是由操作系统内核或者堆管理器动态分配的</p>
+<p>2.只有在程序中需要时才会分配</p>
+<p>3.在CTF的pwn程序中，栈是程序加载进内存后就会出现，而堆需要malloc,alloc,realoc函数分配内存后才会出现。</p>
+<p>Windows和Linux下的堆分配，管理方式都不同，</p>
+<p>堆在虚拟内存中的位置</p>
+<p>128M</p>
+<figure class="highlight markdown"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="emphasis">*用户空间*</span>（独立）</span><br><span class="line">.reserve(预留)                    //0x00000000 ----- 0x0848000</span><br><span class="line"></span><br><span class="line">.text(代码段)</span><br><span class="line"></span><br><span class="line">.data //数据段</span><br><span class="line">.bss（默认为0） //数据段</span><br><span class="line"></span><br><span class="line">heap（堆）</span><br><span class="line">libc.so（共享库）</span><br><span class="line">stack（栈）</span><br><span class="line">argv|----命令行参数</span><br><span class="line">envp|----&gt;环境变量</span><br><span class="line"></span><br><span class="line"><span class="emphasis">*内核空间*</span>（共享）</span><br><span class="line">ZONE<span class="emphasis">_DMA(16M)</span></span><br><span class="line"><span class="emphasis">ZONE_</span>NORMAL(892M)</span><br><span class="line">ZONE<span class="emphasis">_HIGHMEN(128M)</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>堆的生长方向是从低地址向高地址生长的，而栈是从高地址向低地址生长的</strong></p>
+<h3 id="生长方向不同的原因"><a href="#生长方向不同的原因" class="headerlink" title="生长方向不同的原因"></a>生长方向不同的原因</h3><ol>
+<li>‌<strong>内存利用效率</strong>‌：堆和栈的生长方向不同可以让空闲的内存最大程度地被使用。如果栈的生长方向也是向上增长，那么栈空间的起始位置就需要事先固定下来，这样在不同程序中，栈和堆的使用情况不同，可能会导致内存利用不均衡。例如，一个程序可能因为栈溢出而崩溃，但同时堆中还有大量未使用的空间‌</li>
+<li>‌<strong>内存管理方式</strong>‌：栈是由编译器自动管理的，而堆则需要程序员手动管理。栈的空间大小在编译时就已确定，通常不会超过编译器为其分配的空间；而堆则是在运行时动态分配的，可以根据需要申请更多的内存空间‌</li>
+</ol>
+<h2 id="堆的基本结构"><a href="#堆的基本结构" class="headerlink" title="堆的基本结构"></a>堆的基本结构</h2><p><strong>pre size（prev size） 和size 头统称为chunk头（chunk header）</strong></p>
+<p><em>每次malloc申请得到的内存指针，其实指向user data的起始处。</em></p>
+<p>堆的大致图解如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">|-----------------|</span><br><span class="line">| pre size | size |</span><br><span class="line">|-----------------|&lt;---------malloc函数返回的指针指向这里</span><br><span class="line">|    user data    |</span><br><span class="line">|     .......     |</span><br><span class="line">|                 |</span><br><span class="line">|-----------------|</span><br></pre></td></tr></table></figure>
+
+<h3 id="堆的结构"><a href="#堆的结构" class="headerlink" title="堆的结构"></a>堆的结构</h3><h4 id="malloc-chunk的结构"><a href="#malloc-chunk的结构" class="headerlink" title="malloc_chunk的结构"></a>malloc_chunk的结构</h4><p>每个程序分配的内存在内部被一个叫做<strong>“堆块”</strong>的所替代。一个堆块是由元数据和程序返回的内存组成的 <strong>（实际上内存是malloc返回值）</strong>。所有的这些堆块都是保存在堆上，这块内存区域在申请新的内存时会不断的扩大。同样，当一定数量的内存释放时，堆可以收缩。在glibc源码中定义的堆块如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> This struct declaration is misleading (but accurate and necessary).</span></span><br><span class="line"><span class="comment"> It declares a &quot;view&quot; into memory allowing access to necessary</span></span><br><span class="line"><span class="comment"> fields at known offsets from a given base. See explanation below.</span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">malloc_chunk</span> &#123;</span></span><br><span class="line"> INTERNAL_SIZE_T prev_size; <span class="comment">/* Size of previous chunk (if free). */</span></span><br><span class="line"> INTERNAL_SIZE_T size; <span class="comment">/* Size in bytes, including overhead. */</span></span><br><span class="line"> <span class="comment">//一般来说，size_t 在 64 位中是 64 位无符号整数，32 位中是 32 位无符号整数。</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">malloc_chunk</span>* <span class="title">fd</span>;</span> <span class="comment">/* double links -- used only if free. */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">malloc_chunk</span>* <span class="title">bk</span>;</span></span><br><span class="line"> <span class="comment">/* Only used for large blocks: pointer to next larger size. */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">malloc_chunk</span>* <span class="title">fd_nextsize</span>;</span> <span class="comment">/* double links -- used only if free. */</span></span><br><span class="line"> <span class="class"><span class="keyword">struct</span> <span class="title">malloc_chunk</span>* <span class="title">bk_nextsize</span>;</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>假设内存中没有堆块释放，新分配的内存区域紧随之前申请的堆块后。因此如果一个程序依次malloc（256），malloc（512），以及malloc(1024)，内存布局如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Meta-data of chunk created by <span class="title function_">malloc</span><span class="params">(<span class="number">256</span>)</span></span><br><span class="line">The 256 bytes of memory <span class="keyword">return</span> by <span class="built_in">malloc</span></span><br><span class="line">-----------------------------------------</span><br><span class="line">Meta-data of chunk created by <span class="title function_">malloc</span><span class="params">(<span class="number">512</span>)</span></span><br><span class="line">The 512 bytes of memory <span class="keyword">return</span> by <span class="built_in">malloc</span></span><br><span class="line">-----------------------------------------</span><br><span class="line">Meta-data of chunk created by <span class="title function_">malloc</span><span class="params">(<span class="number">1024</span>)</span></span><br><span class="line">The 1024 bytes of memory <span class="keyword">return</span> by <span class="built_in">malloc</span></span><br><span class="line">-----------------------------------------</span><br><span class="line">Meta-data of the top chunk</span><br><span class="line">#堆的生长方向是从低地址向高地址生长的</span><br></pre></td></tr></table></figure>
+
+<p>1.在堆块之间的“———”是虚拟的边界，<strong>实际当中他们是彼此相邻的</strong></p>
+<p>2.布局中包含一个“顶块元数据”（top chunk）。<strong>顶级块表示堆中可利用的内存，而且是唯一的可以大小可以生长的堆块。</strong>当申请新的内存时，顶块分为两个部分：第一个部分变成所申请的堆块，第二个部分变为新的顶块（因此顶块大小可以收缩）。<strong>如果顶块不能够满足申请的内存区域大小，程序就会要求操作系统扩大顶块（让堆继续生长）</strong>。被释放的chunk被记录在链表中（可能是循环双向链表，也可能是单向链表）。具体结构如下</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">        |        Size of previous chunk, <span class="keyword">if</span> <span class="title function_">unallocated</span> <span class="params">(P clear)</span> |</span><br><span class="line">        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">`head:&#x27; |        Size of chunk, in bytes |A|0|P|</span><br><span class="line">  mem-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">        |        Forward pointer to next chunk in <span class="built_in">list</span> |</span><br><span class="line">        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">        |        Back pointer to previous chunk in <span class="built_in">list</span> |</span><br><span class="line">        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">        |        Unused <span class="title function_">space</span> <span class="params">(may be <span class="number">0</span> bytes <span class="type">long</span>)</span> .</span><br><span class="line">        . </span><br><span class="line">        .</span><br><span class="line">   next . </span><br><span class="line">chunk-&gt; +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">`foot:&#x27; |            Size of chunk, in bytes |</span><br><span class="line">        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br><span class="line">        |            Size of next chunk, in bytes |A|0|0|</span><br><span class="line">        +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</span><br></pre></td></tr></table></figure>
+
+<p>一般情况下，<strong>物理相邻的两个空间chunk会被合并成一个chunk。</strong>堆管理器会通过prev_size字段合并两个物理相邻的空闲chunk块。</p>
+<h4 id="1-pre-size-字段"><a href="#1-pre-size-字段" class="headerlink" title="1.pre size 字段"></a>1.pre size 字段</h4><p> <em>pre size(prev size) 全程为previous size</em></p>
+<p><strong>·</strong> pre_size，如果该chunk的物理相邻的前一地址 chunk （两个指针的地址差值为前一chunk大小）是空闲的话，那该字段记录的是<strong>前一个chunk的大小</strong>（包括chunk头）。否则，该字段可以用来储存物理相邻的前一个chunk的数据。<strong>这里的前一chunk指的是较低地址的chunk</strong>。前面一个堆块在使用时并且pre_size为储存前面chunk的数据时，他的值始终为0</p>
+<p><em>堆是由低地址向高地址生长</em></p>
+<h4 id="2-size字段"><a href="#2-size字段" class="headerlink" title="2.size字段"></a>2.size字段</h4><p><strong>size，这个是用来指示当前堆块的大小的（头部（pre size+size）加上user data 的大小</strong>）。大小必须是 2 * SIZE_SZ的整数倍，<strong>如果申请的内存大小不是2乘SIZE_SZ的整数倍，会被转换为满足大小的最小的2乘SIZE_SZ的倍数</strong>。</p>
+<p>32位系统中，SIZE_SZ是4；</p>
+<p>64位系统中，SIZE_SZ是8.</p>
+<p>该字段的低三个比特位对chunk的大小没有影响，字段的最后三位相当于三个flag，这三个的作用分别是：</p>
+<p><strong>1.A（NON_MAIN_ARENA）：为0表示该chunk属于主分配区（主线程），为1表示该chunk属于非主分配区（非主线程）</strong></p>
+<p><strong>2.M（IS_MAPPED）:表示当前chunk是从哪个内存区域获得的虚拟内存，为1表示该chunk是从mmap映射区域分配的，否则是从heap区域分配的</strong></p>
+<p><strong>3.P（PREV_INUSE）：记录前一个chunk块是否被分配。一般来说，堆中第一个被分配的内存块的size字段的P位都会设置为1，以便于防止访问前面的非法内存。当一个chunk的size的P位为0时，我们能通过prev_size 字段来获取上一个chunk的大小以及地址。这也方便进行空闲chunk之间的合并</strong></p>
+<p>​                          0                            1                          2                           3                           4                           5                          6                           7</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th></th>
+<th>0</th>
+<th>0</th>
+<th>1</th>
+</tr>
+</thead>
+</table>
+<p>​                                                                                                                                              <em>NON_MAIN_ARENA</em>   <em>IS_MAPPED</em>     <em>PREV_INUSE</em>                </p>
+<h4 id="3-user-data"><a href="#3-user-data" class="headerlink" title="3.user  data"></a>3.user  data</h4><p>用于存放用户数据</p>
+<p>使用malloc函数分配到的内存的返回值指针是指向user data（用户数据区）</p>
+<p>例如在64位系统中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">malloc</span>（<span class="number">8</span>）</span><br></pre></td></tr></table></figure>
+
+<p>申请到的堆块总大小为16+8+8+1&#x3D;0x21（byte）</p>
+<p>1.第一个16字节是系统分配的最小内存，也就是说如果想要申请的内存小于系统最小分配的内存的话，就会按照最小的内存分配。</p>
+<p>​          <strong>·</strong>在64位系统中这个值是16个字节，在32位系统中是八个字节</p>
+<p>​          <strong>·</strong>例如，如果代码中是malloc（0）的话，堆管理器也会分配最小内存空间给你</p>
+<p>2.第二个8字节是pre size字段的大小（32位的为4字节）</p>
+<p>3.第三个8字节为size 字段的大小（32位的4字节）</p>
+<p>4.最后一个字节是 <strong>PREV_INUSE</strong> 的值，只有0或1两个值</p>
+<p>[^1]: 整理一下：堆的基本结构包括 pre_size、size、user data<br>[^2]: size字段包括：头部（pre size +size）加上user data的大小<br>[^3]: malloc出最小大小为：系统最小分配内存  + pre_size字段 + prev_inuse</p>
+<h3 id="结构图"><a href="#结构图" class="headerlink" title="结构图"></a>结构图</h3><h4 id="使用中（分配后）"><a href="#使用中（分配后）" class="headerlink" title="使用中（分配后）"></a>使用中（分配后）</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">chunk start ----&gt;+++++++++++++++++++++++++++++++++++                                                                      |  previous size  |size     A|M|P |  &lt;=head</span><br><span class="line">                 +++++++++++++++++++++++++++++++++++</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |              data               |  &lt;====user data</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">next chunk ----&gt; +++++++++++++++++++++++++++++++++++</span><br><span class="line">start            |               |                 |</span><br><span class="line">                 |   previous    | size       A|M|P|</span><br><span class="line">                 +++++++++++++++++++++++++++++++++++</span><br></pre></td></tr></table></figure>
+
+<h4 id="空闲中（使用后）"><a href="#空闲中（使用后）" class="headerlink" title="空闲中（使用后）"></a>空闲中（使用后）</h4><p>1.空闲中的chunk不存在M状态，只有A| |P状态</p>
+<p>2.<strong>user data头部被分配出</strong>两个成员，fd和bk</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">chunk start ----&gt;+++++++++++++++++++++++++++++++++++                                                                      |  previous size  |size     A| |P |  &lt;=head</span><br><span class="line">       memory---&gt;+++++++++++++++++++++++++++++++++++</span><br><span class="line">                 |       fd        |       bk      |</span><br><span class="line">                 |+++++++++++++++++++++++++++++++++|</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |              data               |  &lt;====user data</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">                 |                                 |</span><br><span class="line">next chunk ----&gt; +++++++++++++++++++++++++++++++++++</span><br><span class="line">start            |               |                 |</span><br><span class="line">                 |   previous    | size       A|M|P|</span><br><span class="line">                 +++++++++++++++++++++++++++++++++++</span><br></pre></td></tr></table></figure>
+
+<p><strong>·</strong>   chunk处于分配状态时，从fd字段开始是用户的数据，chunk空闲时，会被添加到对应的空闲管理链表中，其字段的含义如下</p>
+<p>fd 指向前一个（非物理相邻）空闲chunk的起始地址，32位占4字节，64位占八字节</p>
+<p>bk 指向后一个（非物理相邻）空闲chunk的起始地址，32位4字节，64位8字节</p>
+<p>通过fd和bk可以将空闲的chunk块加入到空闲的chunk块链表进行统一管理</p>
+<p>[^注意]: 事实上，释放后的large block 中还存在另外两个成员：fd_nextsize和bk_nextsize,上图并未画出，其简介如下</p>
+<p>​	  fd_nextsize  ,   bk_nextsize  ,  是只有chunk空闲的时候才使用 ，不过其用于较大的chunk（large  chunk）</p>
+<p>​          fd_nextsize 指向前一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针。</p>
+<p>​          bk_nextsize 指向后一个与当前chunk大小不同的第一个空闲块，不包含bin的头指针。</p>
+<p>[^注意]: 一般空闲的large chunk按照由大到小的顺序排列，在fd的遍历时，可以避免在寻找合适chunk时对所有chunk进行遍历                                   </p>
+<h2 id="堆块大小"><a href="#堆块大小" class="headerlink" title="堆块大小"></a>堆块大小</h2><p>32位操作系统：</p>
+<p>用户分配到的最小堆块大小为17B：<strong>prev_size(4B) + size(4B) + fd(4B) + bk(4B) + next_chunk –&gt;p(1B)</strong></p>
+<p>若用户申请到的大小超过最小堆块大小，会与16B进行对齐</p>
+<h4 id="空间复用"><a href="#空间复用" class="headerlink" title="空间复用"></a>空间复用</h4><p><strong>当一个chunk处于使用状态时，它的下一个chunk的prev_size无效</strong>。所以下一个chunk的prev_size也可以被当前chunk使用，</p>
+<p>这就是chunk的空间复用</p>
+<h2 id="IDA中常见的指针表示形式"><a href="#IDA中常见的指针表示形式" class="headerlink" title="IDA中常见的指针表示形式"></a>IDA中常见的指针表示形式</h2><p>在IDA的伪代码中的指针形式如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*(qword_6020A8+8)</span><br></pre></td></tr></table></figure>
+
+<p>表示取到qword_6020A8这个地址加8偏移的那个地址储存的值</p>
+<p>汇编代码等同于</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mov rax,cs:qword_6020A8</span><br><span class="line">mov rax,[rax+8]</span><br></pre></td></tr></table></figure>
+
+<p>简单转化一下就是</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">*(addr) = [addr]</span><br></pre></td></tr></table></figure>
+
+<h2 id="链表"><a href="#链表" class="headerlink" title="链表"></a>链表</h2><p>在pwn的题目中经常会有一些笔记管理系统的题目</p>
+<p>代码提供了最基本的增删查改的功能。这个“笔记”的数据结构<strong>通常就是使用链表连接起来的，</strong>记录当前note的大小、属性、内容等等。</p>
+<p>例如</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">*(qword_6020A8 + <span class="number">24LL</span> *i +<span class="number">16</span>) = <span class="number">1LL</span>;<span class="comment">// ==1</span></span><br><span class="line">*(qword_6020A8 + <span class="number">24LL</span> *i +<span class="number">24</span>) = len;</span><br><span class="line">*(qword_6020A8 + <span class="number">24LL</span> *i +<span class="number">32</span>) = note_string</span><br></pre></td></tr></table></figure>
+
+<p> (qword_6020A8+16)就代表从qword_6020A8这个地址处再往后偏移16个字节，取到这个地址存储的值，接着吧1赋值给这个地方（也就是把1存入这个地址）同样的*(qword_6020A8 + 24)就代表偏移24个字节处的值为len依次类推就可以在不连续的内存空间中，把整个note的数据结构存储下来了</p>
+<h2 id="申请堆块的本质"><a href="#申请堆块的本质" class="headerlink" title="申请堆块的本质"></a>申请堆块的本质</h2><p>堆管理器ptmalloc2主要是通过malloc&#x2F;free函数来分配和释放内存块。</p>
+<p>ptmalloc2的作用通俗的讲就是<strong>相当于一个“中间商”</strong>，在程序想要向系统申请堆空间时，这里的ptmalloc2就会申请一块很大的空间，并根据算法从这些内存中把空间真正的分配给程序。</p>
+<p>例如</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">操作系统（内核）=========&gt;运行库（堆管理器）=========&gt;程序</span><br><span class="line">           申请一块较大的空间         根据分配算法来分配空间</span><br></pre></td></tr></table></figure>
+
+<p>例</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;malloc.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">    <span class="type">char</span> *p</span><br><span class="line">    p = <span class="built_in">malloc</span>(<span class="number">10</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在gdb处进行调试，在call malloc处下断点， 在这里使用vmmap命令，查看内存分布。可以看到此时并没有发现堆段</p>
+<p>单步n，vmmap命令再次查看内存，发现出现了堆段</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">gdb</span><br><span class="line"><span class="number">0x555555559000</span>     <span class="number">0x55555557a000</span> rw-p    <span class="number">21000</span>      <span class="number">0</span> [heap]</span><br></pre></td></tr></table></figure>
+
+<p>但是这里我们明明只是申请了10字节的大小，但是为什么这里给了那么大</p>
+<p>的堆段呢？</p>
+<p>计算一下刚好是132kb</p>
+<p>一个地址可以容纳1byte的内容</p>
+<p><strong>这132kb的堆空间叫做arena，此时因为是主线程分配的，所以这个区域叫做main arena</strong></p>
+<p>也就是说这132kb是“厂家”（内核）批发给”中间商“（ptmalloc2)的货物，<strong>以便下次程序在向系统申请小内存的时候，直接去“中间商”去取就行了</strong>，他就会在这ptmalloc2就继续去找“厂家”（系统内核）去取货</p>
+<h2 id="查看已分配的堆内存分布"><a href="#查看已分配的堆内存分布" class="headerlink" title="查看已分配的堆内存分布"></a>查看已分配的堆内存分布</h2><p>在上面我们动态调试的时候执行了malloc函数，申请到的堆指针是保存在eax中的</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">RAX  0x5555555592a0 ◂— 0x0 //申请到的堆指针是保存在eax中的</span><br><span class="line">RBX  0x0</span><br><span class="line">RCX  0x21</span><br><span class="line">RDX  0x0</span><br><span class="line">RDI  0x0</span><br><span class="line">RSI  0x5555555592b0 ◂— 0x0</span><br><span class="line">R8   0x21001</span><br><span class="line">R9   0x5555555592a0 ◂— 0x0</span><br><span class="line">R10  0xfffffffffffff000</span><br><span class="line">R11  0x7ffff7e1ace0 (main_arena+96) —▸ 0x5555555592b0 ◂— 0x0</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>我们这里使用下面这个命令来查看内存堆块情况：</p>
+<blockquote>
+<p>x&#x2F;32gx 0x5555555592a0-0x10 &#x2F;&#x2F;32位的程序使用 x&#x2F;32xw比较直观一点</p>
+</blockquote>
+<p>这里减去0x10表示从堆块的头部开始观察（包含pre size 和 size字段）</p>
+<h2 id="main-arena与-top-chunk"><a href="#main-arena与-top-chunk" class="headerlink" title="main_arena与 top chunk"></a>main_arena与 top chunk</h2><h3 id="main-arena"><a href="#main-arena" class="headerlink" title="main_arena"></a>main_arena</h3><p>这个main_arena其实就是ptmalloc2堆管理器通过与操作系统内核进行交互申请到的，也就是上面所说的“批发”到的一堆货物</p>
+<blockquote>
+<p>因为是主线程分配的，所以叫main arena , 通过增加program break location的方法来增加 main arena 的大小。</p>
+</blockquote>
+<h3 id="top-chunk"><a href="#top-chunk" class="headerlink" title="top chunk"></a>top chunk</h3><p>顾名思义，是<strong>堆中第一个堆块</strong> 相当于<strong>“带头大哥”</strong>，程序以后分配到的内存要放到他的后面</p>
+<p>在系统当前的所以free chunk（无论那种bin) 都无法满足用户请求的内存的大小的时候，将此chunk当作一个应急消防员，分配给用户使用。</p>
+<p><strong>简单来说，也就是在程序在向堆管理器申请内存时，没有合适的内存空间可以分配给他，此时就会从 top chunk 上 “  剪切 ”  一部分作为chunk分配给他</strong> </p>
+<h2 id="free函数和bins"><a href="#free函数和bins" class="headerlink" title="free函数和bins"></a>free函数和bins</h2><h3 id="free函数"><a href="#free函数" class="headerlink" title="free函数"></a>free函数</h3><p>free函数的使用是和bins的分配息息相关的。</p>
+<p>例</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">#include&lt;stdio.h&gt;</span><br><span class="line">#include&lt;string.h&gt;</span><br><span class="line"></span><br><span class="line">int main()&#123;</span><br><span class="line">    char *p;</span><br><span class="line">    p = malloc(10)</span><br><span class="line">    memcpy(p,&quot;hello&quot;,5) //memcpy = memory copy 内存拷贝函数</span><br><span class="line">    free(p);</span><br><span class="line">    return 0;</span><br><span class="line">&#125;</span><br><span class="line">//程序将“hello”字符串复制到申请的堆内存空间中。</span><br></pre></td></tr></table></figure>
+
+<p>gdb调试，执行到memcpy函数后单步运行</p>
+<p>x &#x2F;32gx 0x5555555592a0 - 0x10</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0x555555559290</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000021</span></span><br><span class="line"><span class="number">0x5555555592a0</span>:	<span class="number">0x0000006f6c6c6568</span>	<span class="number">0x0000000000000000</span> <span class="comment">//这里可以看到我们的hello</span></span><br><span class="line"><span class="number">0x5555555592b0</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000020d51</span></span><br><span class="line"><span class="number">0x5555555592c0</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x5555555592d0</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x5555555592e0</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x5555555592f0</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559300</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559310</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559320</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559330</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559340</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559350</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559360</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559370</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"><span class="number">0x555555559380</span>:	<span class="number">0x0000000000000000</span>	<span class="number">0x0000000000000000</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>继续运行 执行free</p>
+<p>可以看到原本堆块中的内容已经被清空</p>
+<p>原本堆空间中的内容已经被清空</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">0x555555559290:	0x0000000000000000	0x0000000000000021</span><br><span class="line">0x5555555592a0:	0x0000000555555559	0xc9e609b7c8be52f0</span><br><span class="line">0x5555555592b0:	0x0000000000000000	0x0000000000020d51</span><br><span class="line">0x5555555592c0:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x5555555592d0:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x5555555592e0:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x5555555592f0:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559300:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559310:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559320:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559330:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559340:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559350:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559360:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559370:	0x0000000000000000	0x0000000000000000</span><br><span class="line">0x555555559380:	0x0000000000000000	0x0000000000000000</span><br></pre></td></tr></table></figure>
+
+<p>执行x &#x2F;2gx 0x5555555592a0</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0x7ffff7e1ace0 &lt;main_arena&gt;:  0x0000000000000000  0x00005555555592a0</span><br></pre></td></tr></table></figure>
+
+<p>所以调用free函数之后做了两件事：</p>
+<p>1.清空此堆块的user_data</p>
+<p>2.将此堆块的指针存储到  main_arena 中了 （或是fast bin)</p>
+<h3 id="bin"><a href="#bin" class="headerlink" title="bin"></a>bin</h3><p>bins 这个概念是与<strong>”内存回收“</strong>相关的，也就是堆管理器会根据用户已经申请到的内存空间大小进行释放，<strong>来决定放入哪类bins</strong>。 bins直接翻译过来就是”垃圾桶“的意思，</p>
+<p>所以系统在决定使用哪个bins时可以看作“垃圾的分类”</p>
+<p>++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++</p>
+<p>暂未完成，后面的还没完全理解贯彻</p>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" title="头像" alt="头像"></a><div class="post-copyright__author_name">山林川泽</div><div class="post-copyright__author_desc">努力学习，努力爱人</div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/')">堆入门</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=堆入门&amp;url=http://example.com/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/&amp;pic=" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><script>function copyCurrentPageUrl() {
+  var currentPageUrl = window.location.href;
+  var input = document.createElement("input");
+  input.setAttribute("value", currentPageUrl);
+  document.body.appendChild(input);
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  document.body.removeChild(input);
+}</script><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="copyCurrentPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://example.com" target="_blank">山林川泽的博客</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/pwn-%E5%A0%86/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>pwn,堆<span class="tagsPageCount">1</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2025/01/18/25-1-18CTF/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">25-1-18CTF</div></div></a></div><div class="next-post pull-right"><a href="/2025/02/24/%E5%88%B7%E9%A2%98%E7%AC%94%E8%AE%B0/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">刷题笔记</div></div></a></div></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info__sayhi" id="author-info__sayhi" onclick="anzhiyu.changeSayHelloText()"></div><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/04/27/64496e511b09c.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-status"><img class="g-status" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://bu.dusays.com/2023/08/24/64e6ce9c507bb.png" alt="status"/></div></div><div class="author-info__description">记录生活、pwn学习进度，CTF题目wp</div></div></div><div class="card-widget anzhiyu-right-widget" id="card-wechat" onclick="null"><div id="flip-wrapper"><div id="flip-content"><div class="face" style="background: url(https://bu.dusays.com/2023/01/13/63c02edf44033.png) center center / 100% no-repeat"></div><div class="back face" style="background: url(https://bu.dusays.com/2023/05/13/645fa415e8694.png) center center / 100% no-repeat"></div></div></div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%A0%86"><span class="toc-number">1.</span> <span class="toc-text">堆</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E9%95%BF%E6%96%B9%E5%90%91%E4%B8%8D%E5%90%8C%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-number">1.0.1.</span> <span class="toc-text">生长方向不同的原因</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E7%9A%84%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.</span> <span class="toc-text">堆的基本结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A0%86%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.1.</span> <span class="toc-text">堆的结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#malloc-chunk%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.1.1.</span> <span class="toc-text">malloc_chunk的结构</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-pre-size-%E5%AD%97%E6%AE%B5"><span class="toc-number">1.1.1.2.</span> <span class="toc-text">1.pre size 字段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-size%E5%AD%97%E6%AE%B5"><span class="toc-number">1.1.1.3.</span> <span class="toc-text">2.size字段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-user-data"><span class="toc-number">1.1.1.4.</span> <span class="toc-text">3.user  data</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E5%9B%BE"><span class="toc-number">1.1.2.</span> <span class="toc-text">结构图</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8%E4%B8%AD%EF%BC%88%E5%88%86%E9%85%8D%E5%90%8E%EF%BC%89"><span class="toc-number">1.1.2.1.</span> <span class="toc-text">使用中（分配后）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A9%BA%E9%97%B2%E4%B8%AD%EF%BC%88%E4%BD%BF%E7%94%A8%E5%90%8E%EF%BC%89"><span class="toc-number">1.1.2.2.</span> <span class="toc-text">空闲中（使用后）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A0%86%E5%9D%97%E5%A4%A7%E5%B0%8F"><span class="toc-number">1.2.</span> <span class="toc-text">堆块大小</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A9%BA%E9%97%B4%E5%A4%8D%E7%94%A8"><span class="toc-number">1.2.0.1.</span> <span class="toc-text">空间复用</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IDA%E4%B8%AD%E5%B8%B8%E8%A7%81%E7%9A%84%E6%8C%87%E9%92%88%E8%A1%A8%E7%A4%BA%E5%BD%A2%E5%BC%8F"><span class="toc-number">1.3.</span> <span class="toc-text">IDA中常见的指针表示形式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%93%BE%E8%A1%A8"><span class="toc-number">1.4.</span> <span class="toc-text">链表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%B3%E8%AF%B7%E5%A0%86%E5%9D%97%E7%9A%84%E6%9C%AC%E8%B4%A8"><span class="toc-number">1.5.</span> <span class="toc-text">申请堆块的本质</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9F%A5%E7%9C%8B%E5%B7%B2%E5%88%86%E9%85%8D%E7%9A%84%E5%A0%86%E5%86%85%E5%AD%98%E5%88%86%E5%B8%83"><span class="toc-number">1.6.</span> <span class="toc-text">查看已分配的堆内存分布</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#main-arena%E4%B8%8E-top-chunk"><span class="toc-number">1.7.</span> <span class="toc-text">main_arena与 top chunk</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#main-arena"><span class="toc-number">1.7.1.</span> <span class="toc-text">main_arena</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#top-chunk"><span class="toc-number">1.7.2.</span> <span class="toc-text">top chunk</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#free%E5%87%BD%E6%95%B0%E5%92%8Cbins"><span class="toc-number">1.8.</span> <span class="toc-text">free函数和bins</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#free%E5%87%BD%E6%95%B0"><span class="toc-number">1.8.1.</span> <span class="toc-text">free函数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#bin"><span class="toc-number">1.8.2.</span> <span class="toc-text">bin</span></a></li></ol></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/03/20/Python%E5%AD%97%E5%85%B8/" title="Python字典">Python字典</a><time datetime="2025-03-20T08:03:47.000Z" title="发表于 2025-03-20 16:03:47">2025-03-20</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/03/19/off-by-one/" title="off-by-one">off-by-one</a><time datetime="2025-03-19T14:35:38.000Z" title="发表于 2025-03-19 22:35:38">2025-03-19</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/03/03/Python%E7%9A%84%E4%B8%80%E4%BA%9B%E7%BC%96%E7%A8%8B%E5%B0%8F%E6%8A%80%E5%B7%A7/" title="Python的一些编程小技巧">Python的一些编程小技巧</a><time datetime="2025-03-03T01:34:09.000Z" title="发表于 2025-03-03 09:34:09">2025-03-03</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/02/24/%E5%88%B7%E9%A2%98%E7%AC%94%E8%AE%B0/" title="刷题笔记">刷题笔记</a><time datetime="2025-02-24T10:51:36.000Z" title="发表于 2025-02-24 18:51:36">2025-02-24</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/01/20/%E5%A0%86%E5%85%A5%E9%97%A8/" title="堆入门">堆入门</a><time datetime="2025-01-20T05:16:37.000Z" title="发表于 2025-01-20 13:16:37">2025-01-20</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2020 - 2025 By <a class="footer-bar-link" href="/" title="山林川泽" target="_blank">山林川泽</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">18</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">18</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">0</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://blog.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/C-%E7%BB%93%E6%9E%84%E4%BD%93/" style="font-size: 0.88rem;">C,结构体<sup>1</sup></a><a href="/tags/C%E8%AF%AD%E8%A8%80%EF%BC%8C%E6%8C%87%E9%92%88%EF%BC%8C%E6%A0%88%E7%A9%BA%E9%97%B4%EF%BC%8C%E5%9C%B0%E5%9D%80/" style="font-size: 0.88rem;">C语言，指针，栈空间，地址<sup>1</sup></a><a href="/tags/PWN-NSSCTF-ret2text-ret2libc/" style="font-size: 0.88rem;">PWN,NSSCTF,ret2text,ret2libc<sup>1</sup></a><a href="/tags/Python/" style="font-size: 0.88rem;">Python<sup>1</sup></a><a href="/tags/ROP-CTF-Ret2text-Ret2shellcode-%E6%A0%88%E6%BA%A2%E5%87%BA%EF%BC%8C%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA%EF%BC%8C%E6%95%B4%E6%95%B0%E6%BA%A2%E5%87%BA/" style="font-size: 0.88rem;">ROP,CTF,Ret2text,Ret2shellcode,栈溢出，缓冲区溢出，整数溢出<sup>1</sup></a><a href="/tags/ROP-Ret2text-Ret2shellcode-CTF/" style="font-size: 0.88rem;">ROP,Ret2text,Ret2shellcode,CTF<sup>1</sup></a><a href="/tags/ROP-ret2text-ret2shellcode-%E6%A0%88%E6%BA%A2%E5%87%BA%EF%BC%8C%E7%BC%93%E5%86%B2%E5%8C%BA%E6%BA%A2%E5%87%BA/" style="font-size: 0.88rem;">ROP,ret2text,ret2shellcode,栈溢出，缓冲区溢出<sup>1</sup></a><a href="/tags/chunk/" style="font-size: 0.88rem;">chunk<sup>1</sup></a><a href="/tags/c%E8%AF%AD%E8%A8%80%EF%BC%8C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%EF%BC%8C%E9%80%89%E6%8B%A9%E7%BB%93%E6%9E%84%EF%BC%8C%E5%BE%AA%E7%8E%AF%E7%BB%93%E6%9E%84%EF%BC%8Cc%E8%AF%AD%E8%A8%80%E8%B0%83%E7%94%A8%E5%87%BD%E6%95%B0%EF%BC%8Cc%E8%AF%AD%E8%A8%80%E4%B8%8E%E6%8C%87%E9%92%88%EF%BC%8C%E6%95%B0%E7%BB%84/" style="font-size: 0.88rem;">c语言，学习笔记，选择结构，循环结构，c语言调用函数，c语言与指针，数组<sup>1</sup></a><a href="/tags/pwn/" style="font-size: 0.88rem;">pwn<sup>1</sup></a><a href="/tags/pwn-%E5%A0%86/" style="font-size: 0.88rem;">pwn,堆<sup>1</sup></a><a href="/tags/ret2libc-ret2syscall/" style="font-size: 0.88rem;">ret2libc,ret2syscall<sup>1</sup></a><a href="/tags/%E2%80%9C%E6%A0%88%EF%BC%8C%E6%A0%88%E7%A9%BA%E9%97%B4%EF%BC%8C%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E2%80%9D/" style="font-size: 0.88rem;">“栈，栈空间，学习笔记”<sup>1</sup></a><a href="/tags/%E5%88%B7%E9%A2%98/" style="font-size: 0.88rem;">刷题<sup>1</sup></a><a href="/tags/%E5%AD%97%E5%85%B8/" style="font-size: 0.88rem;">字典<sup>1</sup></a><a href="/tags/%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C/" style="font-size: 0.88rem;">文件操作<sup>1</sup></a><a href="/tags/%E6%96%B0%E7%94%9F%E8%B5%9B%EF%BC%8C%E6%AF%94%E8%B5%9B/" style="font-size: 0.88rem;">新生赛，比赛<sup>1</sup></a><a href="/tags/%E6%A0%88%E8%BF%81%E7%A7%BB/" style="font-size: 0.88rem;">栈迁移<sup>1</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.7"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@5.0.28/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@17.8.5/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("010/01/2024 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2020 By 安知鱼 V1.6.12",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
+
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
+  );
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 山林川泽 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
+
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
+
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/qrcodejs/1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
+
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
+  }
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>
